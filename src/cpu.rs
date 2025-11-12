@@ -137,3 +137,31 @@ impl FromStr for Instruction {
         Ok(Instruction(opcode, tens, ones))
     }
 }
+
+#[derive(Debug)]
+struct Pinboard {
+    instructions: [Option<Instruction>; 16],
+    last_instruction: u8
+}
+
+enum Status {
+    Halt,
+    Keyboard,
+    Continue
+}
+
+struct Memory([[i64; 10]; 10]);
+
+
+
+struct Cpu {
+    status: Status,
+    pinboards: [Option<Pinboard>; 8], // Remember! Instructions index pinboards from 1!
+    current_pinboard: u8,
+    a: i64,
+    b: i64,
+    e: u8,
+    f: u8,
+    x: u8,
+    y: u8
+}
