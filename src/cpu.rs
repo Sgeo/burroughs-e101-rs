@@ -4,6 +4,7 @@ use thiserror::Error;
 
 use crate::pinboards::{Instruction, Ones, Opcode, Pinboard, Tens};
 
+// TODO: Sound the alarm instead of erroring?
 #[derive(Debug, Error)]
 enum ExecutionError {
     #[error("Missing pinboard {0}")]
