@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use thiserror::Error;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Opcode {
     K, // Keyboard
     W, // Write
@@ -56,7 +56,7 @@ impl FromStr for Opcode {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Tens {
     Num(u8),
     E,
@@ -85,7 +85,7 @@ impl FromStr for Tens {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Ones {
     Num(u8),
     E,
@@ -121,7 +121,7 @@ impl FromStr for Ones {
 }
 
 #[derive(Debug)]
-pub struct Instruction(Opcode, Option<Tens>, Option<Ones>);
+pub struct Instruction(pub Opcode, pub Option<Tens>, pub Option<Ones>);
 
 impl FromStr for Instruction {
     type Err = ParseError;
@@ -140,6 +140,6 @@ impl FromStr for Instruction {
 
 #[derive(Debug)]
 pub struct Pinboard {
-    instructions: [Option<Instruction>; 16],
-    last_instruction: u8
+    pub instructions: [Option<Instruction>; 16],
+    pub next_instruction: u8
 }
