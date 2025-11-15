@@ -3,9 +3,16 @@
 version = 4
 
 [[package]]
+name = "bounded-integer"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddfb439fc02606b667a4422a1667bfa6e4574223f7f6062518a41d399697a657"
+
+[[package]]
 name = "burroughs-e101-rs"
 version = "0.1.0"
 dependencies = [
+ "bounded-integer",
  "thiserror",
 ]
 
