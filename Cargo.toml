@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-bounded-integer = "0.6.1"
+bounded-integer = { version = "0.6.1", features = ["macro"] }
 thiserror = "2.0.17"

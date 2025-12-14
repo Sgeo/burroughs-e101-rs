@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use thiserror::Error;
 
-use crate::pinboards::{Instruction, Ones, Opcode, Pinboard, Tens};
+use crate::{ints::{Word11, Word12}, pinboards::{Instruction, Ones, Opcode, Pinboard, Tens}};
 
 // TODO: Sound the alarm instead of erroring?
 #[derive(Debug, Error)]
@@ -24,14 +24,14 @@ enum Status {
     Continue
 }
 
-struct Memory([[i64; 10]; 10]);
+struct Memory([Word12; 100]);
 
 impl Memory {
-    fn get(&mut self, tens: u8, ones: u8) -> Result<&mut i64, ExecutionError> {
+    fn get(&mut self, tens: u8, ones: u8) -> Result<&mut Word12, ExecutionError> {
         if 10 <= tens || 10 <= ones {
             return Err(ExecutionError::InvalidMemory(tens, ones))
         }
-        Ok(&mut self.0[tens as usize][ones as usize])
+        Ok(&mut self.0[(10 * tens + ones) as usize])
     }
 }
 
@@ -42,8 +42,8 @@ struct Cpu {
     pinboards: [Option<Pinboard>; 8], // Remember! Instructions index pinboards from 1!,
     current_pinboard: u8,
     memory: Memory,
-    a: i64,
-    b: i64,
+    a: Word12,
+    b: Word11,
     e: u8,
     f: u8,
     x: u8,
