@@ -12,7 +12,11 @@ enum ExecutionError {
     #[error("Missing instruction. Pinboard {0} instruction {1}")]
     MissingInstruction(u8, u8),
     #[error("Invalid memory reference: {0} {1}")]
-    InvalidMemory(u8, u8)
+    InvalidMemory(u8, u8),
+    #[error("B Transfer too large")]
+    BTooLarge,
+    #[error("Overflow")]
+    Overflow,
 }
 
 
@@ -71,7 +75,7 @@ impl Cpu {
         }
         *instruction = Instruction(instruction.0, tens, ones);
     }
-    fn step(&mut self) -> Result<(), ExecutionError> {
+    fn step(&mut self, output: &mut Vec<Word12>) -> Result<(), ExecutionError> {
         let pinboard = self.pinboards[self.current_pinboard as usize].as_ref().ok_or(ExecutionError::MissingPinboard(self.current_pinboard))?;
         let instruction = pinboard.instructions[pinboard.next_instruction as usize]
                                                                .as_ref().ok_or(ExecutionError::MissingInstruction(self.current_pinboard, pinboard.next_instruction))?;
@@ -82,11 +86,36 @@ impl Cpu {
             Instruction(Opcode::K, _, _) => {
                 // TODO?: Non-printing keyboard
                 self.status = Status::Keyboard;
-                return Ok(());
             },
             Instruction(Opcode::W, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
                 *self.memory.get(tens, ones)? = self.a;
+            },
+            Instruction(Opcode::R, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
+                self.a = *self.memory.get(tens, ones)?;
+            },
+            Instruction(Opcode::B, _, _) => {
+                self.b = Word11::new(self.a.get()).ok_or(ExecutionError::BTooLarge)?;
             }
+            Instruction(Opcode::P, _, Some(Ones::Num(0))) => {
+                // No-op
+                // Originally for carriage control, but I'm not supporting that.
+            },
+            Instruction(Opcode::P, _, Some(Ones::Star)) => {
+                output.push(self.a);
+                self.status = Status::Halt;
+            },
+            Instruction(Opcode::P, _, _) => {
+                output.push(self.a);
+            },
+            Instruction(Opcode::Plus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
+                self.a = self.a.checked_add(self.memory.get(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
+                // Currently not implemented: Proper continuation after alarm
+            }
+            Instruction(Opcode::Minus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
+                self.a = self.a.checked_sub(self.memory.get(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
+                // Currently not implemented: Proper continuation after alarm
+            }
+            
         }
 
         Ok(())
