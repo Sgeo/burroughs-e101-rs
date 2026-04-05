@@ -118,7 +118,13 @@ impl Cpu {
             Instruction(Opcode::Minus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
                 self.a = self.a.checked_sub(self.memory.get::<IO>(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
                 // Currently not implemented: Proper continuation after alarm
+            },
+            Instruction(Opcode::Mult, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
+                let multiplied = self.a.get() * self.b.get();
+                let significant = multiplied / 1_00_000_000_000;
+                self.a = Word12::new(significant).ok_or(ExecutionError::Overflow)?;
             }
+            
             
         }
 
