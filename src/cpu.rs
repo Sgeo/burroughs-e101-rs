@@ -88,6 +88,8 @@ impl Cpu {
             Instruction(Opcode::K, _, _) => {
                 // TODO?: Non-printing keyboard
                 self.status = Status::Keyboard;
+                // TODO: Check math for negatives
+                self.a = io.keyboard()? % 100_000_000_000;
             },
             Instruction(Opcode::W, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
                 *self.memory.get::<IO>(tens, ones)? = self.a;
