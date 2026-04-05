@@ -90,10 +90,10 @@ impl Cpu {
                 self.status = Status::Keyboard;
             },
             Instruction(Opcode::W, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
-                *self.memory.get(tens, ones)? = self.a;
+                *self.memory.get::<IO>(tens, ones)? = self.a;
             },
             Instruction(Opcode::R, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
-                self.a = *self.memory.get(tens, ones)?;
+                self.a = *self.memory.get::<IO>(tens, ones)?;
             },
             Instruction(Opcode::B, _, _) => {
                 self.b = Word11::new(self.a.get()).ok_or(ExecutionError::BTooLarge)?;
@@ -110,11 +110,11 @@ impl Cpu {
                 io.print(self.a)?;
             },
             Instruction(Opcode::Plus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
-                self.a = self.a.checked_add(self.memory.get(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
+                self.a = self.a.checked_add(self.memory.get::<IO>(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
                 // Currently not implemented: Proper continuation after alarm
             }
             Instruction(Opcode::Minus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
-                self.a = self.a.checked_sub(self.memory.get(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
+                self.a = self.a.checked_sub(self.memory.get::<IO>(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
                 // Currently not implemented: Proper continuation after alarm
             }
             
