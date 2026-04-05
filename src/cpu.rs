@@ -1,4 +1,4 @@
-use std::{error::Error, str::FromStr};
+use std::{error::Error, num::TryFromIntError, str::FromStr};
 
 use thiserror::Error;
 
@@ -120,11 +120,11 @@ impl Cpu {
                 // Currently not implemented: Proper continuation after alarm
             },
             Instruction(Opcode::Mult, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
-                let multiplied = self.a.get() * self.b.get();
+                let multiplied = self.a.get() as i128 * self.b.get() as i128;
                 let significant = multiplied / 1_00_000_000_000;
-                self.a = Word12::new(significant).ok_or(ExecutionError::Overflow)?;
+                self.a = Word12::new(significant.try_into().expect("i128 / 1_00_000_000_000 should fit in i64?")).ok_or(ExecutionError::Overflow)?;
             }
-            
+
             
         }
 
