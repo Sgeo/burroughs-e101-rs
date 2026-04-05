@@ -1,12 +1,12 @@
-use std::str::FromStr;
+use std::{error::Error, str::FromStr};
 
 use thiserror::Error;
 
-use crate::{ints::{Word11, Word12}, pinboards::{Instruction, Ones, Opcode, Pinboard, Tens}};
+use crate::{ints::{Word11, Word12}, pinboards::{Instruction, Ones, Opcode, Pinboard, Tens}, io::IO};
 
 // TODO: Sound the alarm instead of erroring?
 #[derive(Debug, Error)]
-enum ExecutionError {
+enum ExecutionError<IOError: Error> {
     #[error("Missing pinboard {0}")]
     MissingPinboard(u8),
     #[error("Missing instruction. Pinboard {0} instruction {1}")]
@@ -17,6 +17,8 @@ enum ExecutionError {
     BTooLarge,
     #[error("Overflow")]
     Overflow,
+    #[error("IO Error: {0}")]
+    IOError(#[from] IOError)
 }
 
 
@@ -31,7 +33,7 @@ enum Status {
 struct Memory([Word12; 100]);
 
 impl Memory {
-    fn get(&mut self, tens: u8, ones: u8) -> Result<&mut Word12, ExecutionError> {
+    fn get<IOError: Error>(&mut self, tens: u8, ones: u8) -> Result<&mut Word12, ExecutionError<IOError>> {
         if 10 <= tens || 10 <= ones {
             return Err(ExecutionError::InvalidMemory(tens, ones))
         }
@@ -75,7 +77,7 @@ impl Cpu {
         }
         *instruction = Instruction(instruction.0, tens, ones);
     }
-    fn step(&mut self, output: &mut Vec<Word12>) -> Result<(), ExecutionError> {
+    fn step<IOError: Error, IO: crate::io::IO<Error=IOError>>(&mut self, io: &mut IO) -> Result<(), ExecutionError<IOError>> {
         let pinboard = self.pinboards[self.current_pinboard as usize].as_ref().ok_or(ExecutionError::MissingPinboard(self.current_pinboard))?;
         let instruction = pinboard.instructions[pinboard.next_instruction as usize]
                                                                .as_ref().ok_or(ExecutionError::MissingInstruction(self.current_pinboard, pinboard.next_instruction))?;
@@ -101,11 +103,11 @@ impl Cpu {
                 // Originally for carriage control, but I'm not supporting that.
             },
             Instruction(Opcode::P, _, Some(Ones::Star)) => {
-                output.push(self.a);
+                io.print(self.a)?;
                 self.status = Status::Halt;
             },
             Instruction(Opcode::P, _, _) => {
-                output.push(self.a);
+                io.print(self.a)?;
             },
             Instruction(Opcode::Plus, Some(Tens::Num(tens)), Some(Ones::Num(ones))) => {
                 self.a = self.a.checked_add(self.memory.get(tens, ones)?.get()).ok_or(ExecutionError::Overflow)?;
