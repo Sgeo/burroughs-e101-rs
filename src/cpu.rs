@@ -6,7 +6,7 @@ use crate::{ints::{Word11, Word12}, pinboards::{Instruction, Ones, Opcode, Pinbo
 
 // TODO: Sound the alarm instead of erroring?
 #[derive(Debug, Error)]
-enum ExecutionError<IOError: Error> {
+enum ExecutionError<IOError> {
     #[error("Missing pinboard {0}")]
     MissingPinboard(u8),
     #[error("Missing instruction. Pinboard {0} instruction {1}")]
@@ -33,7 +33,7 @@ enum Status {
 struct Memory([Word12; 100]);
 
 impl Memory {
-    fn get<IOError: Error>(&mut self, tens: u8, ones: u8) -> Result<&mut Word12, ExecutionError<IOError>> {
+    fn get<IO: crate::io::IO>(&mut self, tens: u8, ones: u8) -> Result<&mut Word12, ExecutionError<IO::Error>> {
         if 10 <= tens || 10 <= ones {
             return Err(ExecutionError::InvalidMemory(tens, ones))
         }
@@ -77,7 +77,7 @@ impl Cpu {
         }
         *instruction = Instruction(instruction.0, tens, ones);
     }
-    fn step<IOError: Error, IO: crate::io::IO<Error=IOError>>(&mut self, io: &mut IO) -> Result<(), ExecutionError<IOError>> {
+    fn step<IO: crate::io::IO>(&mut self, io: &mut IO) -> Result<(), ExecutionError<IO::Error>> {
         let pinboard = self.pinboards[self.current_pinboard as usize].as_ref().ok_or(ExecutionError::MissingPinboard(self.current_pinboard))?;
         let instruction = pinboard.instructions[pinboard.next_instruction as usize]
                                                                .as_ref().ok_or(ExecutionError::MissingInstruction(self.current_pinboard, pinboard.next_instruction))?;
